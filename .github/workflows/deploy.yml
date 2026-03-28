@@ -1,0 +1,156 @@
+name: Optimized Build and Deploy (next) | CSBD_PROJECTS
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  NODE_ENV: production
+  # No more hardcoded pnpm version here!
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install pnpm (Automatic Versioning)
+        run: |
+          corepack enable
+          corepack prepare pnpm@latest --activate
+
+      - name: Setup pnpm cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # --- IMPROVED: .env Creation ---
+      # This creates the .env file for the build step and the production package.
+      # Ensure you add 'ENV_FILE_CONTENT' to your GitHub Secrets.
+      - name: Create .env file
+        run: |
+          echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
+          echo "NODE_ENV=production" >> .env
+
+      - name: Run linting
+        run: pnpm lint
+        continue-on-error: true
+
+      - name: Build Next.js application
+        run: pnpm run build
+
+      - name: Install production dependencies
+        run: pnpm install --prod --frozen-lockfile
+
+      - name: Create deployment package
+        run: |
+          mkdir -p deploy-package
+          # Selective copying to keep package light
+          cp -r .next deploy-package/
+          cp -r node_modules deploy-package/
+          cp -r public deploy-package/
+          cp server.cjs deploy-package/
+          cp next.config.js deploy-package/
+          cp package.json deploy-package/
+          cp pnpm-lock.yaml deploy-package/
+          cp .env deploy-package/
+          cp .npmrc deploy-package/ || true
+          
+          cd deploy-package && tar -czf ../deployment.tar.gz . && cd ..
+
+      - name: Generate Checksum
+        run: sha256sum deployment.tar.gz > deployment.tar.gz.sha256
+
+      - name: Upload deployment artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-package
+          path: |
+            deployment.tar.gz
+            deployment.tar.gz.sha256
+          retention-days: 1 # Reduced to 1 day to save GitHub storage
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Download deployment artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: deployment-package
+          path: ./artifact
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p ${{ secrets.VPS_PORT }} ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Deploy to server
+        run: |
+          # Upload to home directory first
+          scp -i ~/.ssh/deploy_key -P ${{ secrets.VPS_PORT }} ./artifact/deployment.tar.gz ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:~/deployment.tar.gz
+          scp -i ~/.ssh/deploy_key -P ${{ secrets.VPS_PORT }} ./artifact/deployment.tar.gz.sha256 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:~/deployment.tar.gz.sha256
+
+          ssh -i ~/.ssh/deploy_key -p ${{ secrets.VPS_PORT }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+          set -e
+
+          # 1. Verify Integrity
+          cd ~
+          EXPECTED_SHA=$(awk '{print $1}' deployment.tar.gz.sha256)
+          ACTUAL_SHA=$(sha256sum deployment.tar.gz | awk '{print $1}')
+          
+          if [ "$EXPECTED_SHA" != "$ACTUAL_SHA" ]; then
+            echo "ERROR: Checksum mismatch!"
+            exit 1
+          fi
+
+          # 2. Prepare Path
+          APP_HOME="${{ secrets.PROD_PATH }}"
+          mkdir -p "$APP_HOME"
+          
+          # --- IMPROVED: Aggressive Storage Cleanup ---
+          # We clear everything except hidden files to ensure a fresh, low-storage state
+          echo "Purging old build files in $APP_HOME to save space..."
+          find "$APP_HOME" -maxdepth 1 -not -path "$APP_HOME" -not -name ".*" -exec rm -rf {} +
+          
+          # 3. Extract to Path
+          echo "Extracting new deployment..."
+          tar -xzf ~/deployment.tar.gz -C "$APP_HOME"
+          
+          # Cleanup the temporary tar files immediately after extraction
+          rm ~/deployment.tar.gz ~/deployment.tar.gz.sha256
+
+          # 4. Final Verification
+          cd "$APP_HOME"
+          if [ ! -f "server.cjs" ]; then
+            echo "ERROR: server.cjs missing!"
+            exit 1
+          fi
+
+          # 5. Restart Plesk (Passenger)
+          mkdir -p tmp && touch tmp/restart.txt
+
+          echo "Deployment finished successfully for $APP_HOME"
+          EOF
+
+      - name: Cleanup SSH key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
