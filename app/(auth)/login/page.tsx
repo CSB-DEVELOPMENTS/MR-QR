@@ -88,9 +88,9 @@ function LoginPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f3f4f6]">
+    <div className="bg-background min-h-screen">
       <div className="grid min-h-screen lg:grid-cols-2">
-        <aside className="relative hidden lg:flex items-center justify-center overflow-hidden bg-linear-to-br from-[#f97316] via-[#ea580c] to-[#431407] p-14">
+        <aside className="bg-brand-gradient relative hidden items-center justify-center overflow-hidden p-14 lg:flex">
           <div
             className="absolute inset-0 opacity-35"
             style={{
@@ -101,7 +101,7 @@ function LoginPageContent() {
 
           <div className="relative w-full max-w-md text-white">
             <div className="mx-auto flex h-72 w-72 items-center justify-center rounded-2xl border border-white/30 bg-white/10 shadow-2xl backdrop-blur-sm">
-              <div className="flex h-36 w-36 items-center justify-center rounded-2xl bg-[#f97316] shadow-xl">
+              <div className="bg-primary flex h-36 w-36 items-center justify-center rounded-2xl shadow-xl">
                 <span className="text-6xl font-black tracking-tight">QR</span>
               </div>
             </div>
@@ -116,10 +116,12 @@ function LoginPageContent() {
         </aside>
 
         <section className="flex items-center justify-center px-6 py-10 sm:px-8">
-          <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-8 shadow-xl sm:p-10">
+          <div className="bg-card border-border w-full max-w-md rounded-2xl border p-8 shadow-xl sm:p-10">
             <div className="mb-6 text-center sm:text-left">
-              <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">Welcome Back</h1>
-              <p className="mt-1 text-sm text-gray-500">
+              <h1 className="text-foreground text-3xl font-extrabold tracking-tight">
+                Welcome Back
+              </h1>
+              <p className="text-muted-foreground mt-1 text-sm">
                 {mode === "signin"
                   ? "Enter your details to access your account"
                   : "Create your account to start building QR workflows"}
@@ -127,12 +129,12 @@ function LoginPageContent() {
             </div>
 
             {effectiveError && (
-              <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              <div className="border-destructive/25 bg-destructive/10 text-destructive mb-4 rounded-lg border px-4 py-3 text-sm">
                 {effectiveError}
               </div>
             )}
             {info && (
-              <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+              <div className="bg-secondary text-secondary-foreground border-border mb-4 rounded-lg border px-4 py-3 text-sm">
                 {info}
               </div>
             )}
@@ -141,7 +143,7 @@ function LoginPageContent() {
               type="button"
               onClick={handleGoogleSignIn}
               disabled={submitting}
-              className="mb-5 flex w-full items-center justify-center gap-3 rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-800 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+              className="bg-card text-foreground border-input focus:ring-ring mb-5 flex w-full items-center justify-center gap-3 rounded-xl border px-4 py-3 text-sm font-semibold transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
               <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
                 <path
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -164,9 +166,11 @@ function LoginPageContent() {
             </button>
 
             <div className="mb-5 flex items-center gap-3">
-              <div className="h-px flex-1 bg-gray-200" />
-              <span className="text-xs font-semibold tracking-[0.2em] text-gray-400">OR</span>
-              <div className="h-px flex-1 bg-gray-200" />
+              <div className="bg-border h-px flex-1" />
+              <span className="text-muted-foreground text-xs font-semibold tracking-[0.2em]">
+                OR
+              </span>
+              <div className="bg-border h-px flex-1" />
             </div>
 
             <form onSubmit={handleEmailSubmit} className="space-y-4">
@@ -174,7 +178,7 @@ function LoginPageContent() {
                 <div>
                   <label
                     htmlFor="fullName"
-                    className="mb-1.5 block text-sm font-medium text-gray-700">
+                    className="text-foreground mb-1.5 block text-sm font-medium">
                     Full Name
                   </label>
                   <input
@@ -184,13 +188,13 @@ function LoginPageContent() {
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder="John Doe"
-                    className="w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500"
+                    className="text-foreground border-input bg-card placeholder:text-muted-foreground focus:border-primary focus:ring-ring w-full rounded-xl border px-3.5 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-1"
                   />
                 </div>
               )}
 
               <div>
-                <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-gray-700">
+                <label htmlFor="email" className="text-foreground mb-1.5 block text-sm font-medium">
                   Email Address
                 </label>
                 <input
@@ -201,13 +205,13 @@ function LoginPageContent() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@company.com"
-                  className="w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500"
+                  className="text-foreground border-input bg-card placeholder:text-muted-foreground focus:border-primary focus:ring-ring w-full rounded-xl border px-3.5 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-1"
                 />
               </div>
 
               <div>
                 <div className="mb-1.5 flex items-center justify-between">
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="password" className="text-foreground block text-sm font-medium">
                     Password
                   </label>
                   {mode === "signin" && (
@@ -215,7 +219,7 @@ function LoginPageContent() {
                       type="button"
                       onClick={handleForgotPassword}
                       disabled={submitting}
-                      className="text-xs font-semibold text-orange-600 hover:text-orange-700 disabled:cursor-not-allowed disabled:opacity-60">
+                      className="text-primary hover:text-primary/90 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-60">
                       Forgot?
                     </button>
                   )}
@@ -229,19 +233,19 @@ function LoginPageContent() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   minLength={8}
-                  className="w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500"
+                  className="text-foreground border-input bg-card placeholder:text-muted-foreground focus:border-primary focus:ring-ring w-full rounded-xl border px-3.5 py-2.5 text-sm shadow-sm focus:outline-none focus:ring-1"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={submitting}
-                className="mt-1 w-full rounded-xl bg-[#f97316] px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:bg-[#ea580c] focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+                className="bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-ring mt-1 w-full rounded-xl px-4 py-2.5 text-sm font-semibold shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
                 {submitting ? "Please wait…" : mode === "signin" ? "Sign In" : "Create account"}
               </button>
             </form>
 
-            <p className="mt-7 text-center text-sm text-gray-600">
+            <p className="text-muted-foreground mt-7 text-center text-sm">
               {mode === "signin" ? (
                 <>
                   Don&apos;t have an account?{" "}
@@ -252,7 +256,7 @@ function LoginPageContent() {
                       setError(null);
                       setInfo(null);
                     }}
-                    className="font-semibold text-orange-600 hover:text-orange-700">
+                    className="text-primary hover:text-primary/90 font-semibold">
                     Create an account
                   </button>
                 </>
@@ -266,14 +270,14 @@ function LoginPageContent() {
                       setError(null);
                       setInfo(null);
                     }}
-                    className="font-semibold text-orange-600 hover:text-orange-700">
+                    className="text-primary hover:text-primary/90 font-semibold">
                     Sign in
                   </button>
                 </>
               )}
             </p>
 
-            <div className="mt-8 flex items-center justify-center gap-5 text-xs text-gray-400">
+            <div className="text-muted-foreground mt-8 flex items-center justify-center gap-5 text-xs">
               <span>Privacy Policy</span>
               <span>Terms of Service</span>
               <span>Help Center</span>
@@ -287,7 +291,7 @@ function LoginPageContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-linear-to-br from-cyan-50 to-teal-100" />}>
+    <Suspense fallback={<div className="bg-brand-gradient-soft min-h-screen" />}>
       <LoginPageContent />
     </Suspense>
   );
