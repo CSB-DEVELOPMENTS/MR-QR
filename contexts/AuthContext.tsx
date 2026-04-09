@@ -20,7 +20,7 @@ interface AuthContextValue {
   signUpWithEmail: (
     email: string,
     password: string,
-    options?: { fullName?: string }
+    options?: { fullName?: string },
   ) => Promise<{ error: AuthError | null }>;
   signInWithGoogle: () => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<{ error: AuthError | null }>;
@@ -62,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       return { error };
     },
-    [supabase]
+    [supabase],
   );
 
   const signUpWithEmail = useCallback(
@@ -79,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       return { error };
     },
-    [supabase]
+    [supabase],
   );
 
   const signInWithGoogle = useCallback(async () => {
@@ -108,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       return { error };
     },
-    [supabase]
+    [supabase],
   );
 
   return (
