@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { BarChart3, CreditCard, Home, Link2, QrCode, UserCircle2 } from "lucide-react";
+import { BarChart3, LayoutDashboard, Link2, PanelsTopLeft, QrCode } from "lucide-react";
 
 export type NavItem = {
   label: string;
@@ -8,12 +8,11 @@ export type NavItem = {
 };
 
 export const navigationItems: NavItem[] = [
-  { label: "Dashboard", href: "/", icon: Home },
-  { label: "QR Codes", href: "/qr", icon: QrCode },
-  { label: "Links", href: "/links", icon: Link2 },
+  { label: "Overview", href: "/", icon: LayoutDashboard },
+  { label: "QR Studio", href: "/qr", icon: QrCode },
+  { label: "Link Hub", href: "/links", icon: Link2 },
+  { label: "Page Builder", href: "/pages", icon: PanelsTopLeft },
   { label: "Analytics", href: "/analytics", icon: BarChart3 },
-  { label: "Subscription", href: "/subscription", icon: CreditCard },
-  { label: "Profile", href: "/profile", icon: UserCircle2 },
 ];
 
 function normalizePath(pathname: string): string {

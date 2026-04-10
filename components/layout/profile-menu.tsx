@@ -17,7 +17,7 @@ import {
 
 export function ProfileMenu() {
   const router = useRouter();
-  const { user, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const [loggingOut, setLoggingOut] = useState(false);
 
   async function handleLogout() {
@@ -27,8 +27,10 @@ export function ProfileMenu() {
     router.replace("/login");
   }
 
-  const userEmail = user?.email ?? "Guest";
-  const userInitial = userEmail.charAt(0).toUpperCase();
+  const userEmail = user?.email ?? profile?.email ?? "Guest";
+  const displayName =
+    [profile?.first_name, profile?.last_name].filter(Boolean).join(" ") || userEmail;
+  const userInitial = (profile?.first_name ?? userEmail).charAt(0).toUpperCase();
 
   return (
     <DropdownMenu>
@@ -42,7 +44,12 @@ export function ProfileMenu() {
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel>{userEmail}</DropdownMenuLabel>
+        <DropdownMenuLabel>
+          <div className="flex flex-col gap-0.5">
+            <span>{displayName}</span>
+            <span className="text-muted-foreground text-xs font-normal">{userEmail}</span>
+          </div>
+        </DropdownMenuLabel>
         <DropdownMenuSeparator />
 
         <DropdownMenuItem asChild>

@@ -9,13 +9,15 @@ type AppShellProps = {
 
 export function AppShell({ children }: AppShellProps) {
   return (
-    <SidebarProvider>
-      <Sidebar />
+    <SidebarProvider className="min-h-svh flex-col">
+      <TopNavbar />
 
-      <SidebarInset className="min-h-screen">
-        <TopNavbar />
-        <div className="flex-1 p-4 md:p-6">{children}</div>
-      </SidebarInset>
+      <div className="flex min-h-0 flex-1">
+        <Sidebar />
+        <SidebarInset className="min-h-0">
+          <div className="flex flex-1 flex-col p-4 md:p-6">{children}</div>
+        </SidebarInset>
+      </div>
     </SidebarProvider>
   );
 }

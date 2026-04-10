@@ -6,7 +6,6 @@ import { navigationItems, isNavItemActive } from "@/config/navigation";
 import {
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -31,9 +30,8 @@ export function SidebarNav({ onNavigate }: SidebarNavProps) {
   return (
     <nav aria-label="Primary">
       <SidebarGroup>
-        <SidebarGroupLabel>Navigation</SidebarGroupLabel>
         <SidebarGroupContent>
-          <SidebarMenu>
+          <SidebarMenu className="gap-1">
             {navigationItems.map((item) => {
               const active = isNavItemActive(item.href, pathname);
               const Icon = item.icon;
