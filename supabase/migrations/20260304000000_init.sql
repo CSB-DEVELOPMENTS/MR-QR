@@ -13,6 +13,45 @@ END;
 $$ LANGUAGE plpgsql;
 
 --------------------------------------------------
+-- FUNCTION: create users row from auth.users
+--------------------------------------------------
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    full_name_value text;
+    normalized_full_name text;
+    first_name_value text;
+    last_name_value text;
+BEGIN
+    full_name_value := NULLIF(TRIM(COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.raw_user_meta_data->>'name', '')), '');
+
+    IF full_name_value IS NOT NULL THEN
+        normalized_full_name := REGEXP_REPLACE(full_name_value, '\s+', ' ', 'g');
+        first_name_value := SPLIT_PART(normalized_full_name, ' ', 1);
+        last_name_value := NULLIF(TRIM(SUBSTRING(normalized_full_name FROM LENGTH(first_name_value) + 1)), '');
+    ELSE
+        first_name_value := NULLIF(TRIM(COALESCE(NEW.raw_user_meta_data->>'given_name', '')), '');
+        last_name_value := NULLIF(TRIM(COALESCE(NEW.raw_user_meta_data->>'family_name', '')), '');
+    END IF;
+
+    INSERT INTO public.users (user_id, email, first_name, last_name, created_at, updated_at)
+    VALUES (NEW.id, NEW.email, first_name_value, last_name_value, now(), now())
+    ON CONFLICT (user_id) DO UPDATE
+    SET
+        email = EXCLUDED.email,
+        first_name = COALESCE(EXCLUDED.first_name, public.users.first_name),
+        last_name = COALESCE(EXCLUDED.last_name, public.users.last_name),
+        updated_at = now();
+
+    RETURN NEW;
+END;
+$$;
+
+--------------------------------------------------
 -- 1. subscription_plan
 --------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.subscription_plan (
@@ -38,7 +77,7 @@ FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 -- 2. user
 --------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.users (
-    user_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id uuid PRIMARY KEY,
     email text UNIQUE NOT NULL,
     first_name text,
     last_name text,
@@ -46,12 +85,37 @@ CREATE TABLE IF NOT EXISTS public.users (
     updated_at timestamptz DEFAULT now()
 );
 
+ALTER TABLE IF EXISTS public.users
+ALTER COLUMN user_id DROP DEFAULT;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conname = 'users_user_id_fkey'
+          AND conrelid = 'public.users'::regclass
+    ) THEN
+        ALTER TABLE public.users
+        ADD CONSTRAINT users_user_id_fkey
+        FOREIGN KEY (user_id)
+        REFERENCES auth.users(id)
+        ON DELETE CASCADE;
+    END IF;
+END;
+$$;
+
 CREATE INDEX IF NOT EXISTS idx_user_subscription_id ON public.users(user_id);
 
 DROP TRIGGER IF EXISTS trg_user_updated_at ON public.users;
 CREATE TRIGGER trg_user_updated_at
 BEFORE UPDATE ON public.users
 FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+AFTER INSERT ON auth.users
+FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 --------------------------------------------------
 -- 3. landing_page
@@ -265,12 +329,6 @@ ON public.users
 FOR SELECT
 TO authenticated
 USING (user_id = auth.uid());
-
-CREATE POLICY users_owner_insert
-ON public.users
-FOR INSERT
-TO authenticated
-WITH CHECK (user_id = auth.uid());
 
 CREATE POLICY users_owner_update
 ON public.users
